@@ -1,0 +1,229 @@
+services:
+  # ========================================
+  # DATABASES
+  # ========================================
+  
+  postgres:
+    image: postgres:15-alpine
+    container_name: library-postgres
+    environment:
+      POSTGRES_USER: library_admin
+      POSTGRES_PASSWORD: library_pass_123
+      POSTGRES_DB: library_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - library-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U library_admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:7
+    container_name: library-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: library_admin
+      MONGO_INITDB_ROOT_PASSWORD: library_pass_123
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - library-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================================
+  # MESSAGE QUEUE & STREAMING
+  # ========================================
+  
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: library-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: library_admin
+      RABBITMQ_DEFAULT_PASS: library_pass_123
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - library-network
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: library-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - library-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: library-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - library-network
+    healthcheck:
+      test: kafka-broker-api-versions --bootstrap-server localhost:9092
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================================
+  # CACHE & DISTRIBUTED LOCKING
+  # ========================================
+  
+  redis:
+    image: redis:7-alpine
+    container_name: library-redis
+    command: redis-server --requirepass library_pass_123
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - library-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================================
+  # SERVICE DISCOVERY
+  # ========================================
+  
+  consul:
+    image: hashicorp/consul:latest
+    container_name: library-consul
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
+    command: agent -server -ui -bootstrap-expect=1 -client=0.0.0.0
+    volumes:
+      - consul_data:/consul/data
+    networks:
+      - library-network
+    healthcheck:
+      test: ["CMD", "consul", "members"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================================
+  # MONITORING
+  # ========================================
+  
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: library-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - library-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: library-grafana
+    ports:
+      - "3005:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - library-network
+    depends_on:
+      - prometheus
+
+  # ========================================
+  # MICROSERVICES (CHỈ BOOK-SERVICE)
+  # ========================================
+  
+  book-service:
+    build:
+      context: ./services/book-service
+      dockerfile: Dockerfile
+    container_name: library-book-service
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      MONGODB_URI: mongodb://library_admin:library_pass_123@mongodb:27017/books_db?authSource=admin
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: library_pass_123
+      CONSUL_HOST: consul
+      CONSUL_PORT: 8500
+      KAFKA_BROKER: kafka:9092
+      RABBITMQ_URL: amqp://library_admin:library_pass_123@rabbitmq:5672
+    networks:
+      - library-network
+    depends_on:
+      - mongodb
+      - redis
+      - consul
+      - kafka
+      - rabbitmq
+    restart: unless-stopped
+
+# ========================================
+# NETWORKS
+# ========================================
+networks:
+  library-network:
+    driver: bridge
+
+# ========================================
+# VOLUMES
+# ========================================
+volumes:
+  postgres_data:
+  mongo_data:
+  redis_data:
+  rabbitmq_data:
+  consul_data:
+  prometheus_data:
+  grafana_data:

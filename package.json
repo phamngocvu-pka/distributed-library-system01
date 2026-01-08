@@ -1,0 +1,44 @@
+{
+  "name": "distributed-library-system",
+  "version": "1.0.0",
+  "description": "Distributed Library Management System - Microservices Architecture",
+  "main": "index.js",
+  "scripts": {
+    "install:all": "cd services/book-service && npm install && cd ../user-service && npm install && cd ../borrowing-service && npm install && cd ../notification-service && npm install",
+    "dev:book": "cd services/book-service && npm run dev",
+    "dev:user": "cd services/user-service && npm run dev",
+    "dev:borrowing": "cd services/borrowing-service && npm run dev",
+    "dev:notification": "cd services/notification-service && npm run dev",
+    "start:pm2": "pm2 start ecosystem.config.js",
+    "stop:pm2": "pm2 stop all",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build",
+    "docker:logs": "docker-compose logs -f",
+    "backup": "bash scripts/backup.sh",
+    "health-check": "bash scripts/health-check.sh",
+    "deploy": "bash scripts/deploy.sh",
+    "test": "echo \"Run tests for all services\"",
+    "lint": "eslint services/*/src/**/*.js"
+  },
+  "keywords": [
+    "distributed-systems",
+    "microservices",
+    "library-management",
+    "node.js",
+    "docker",
+    "kubernetes",
+    "message-queue",
+    "event-driven"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

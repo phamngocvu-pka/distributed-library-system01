@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📚 Thư Viện Số - Trang Người Dùng</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-book-reader"></i>
+                    <h1>Thư Viện Số</h1>
+                </div>
+                <nav>
+                    <a href="#" class="nav-link active" data-section="home">
+                        <i class="fas fa-home"></i> Trang chủ
+                    </a>
+                    <a href="#" class="nav-link" data-section="search">
+                        <i class="fas fa-search"></i> Tìm kiếm
+                    </a>
+                    <a href="#" class="nav-link" data-section="my-books">
+                        <i class="fas fa-bookmark"></i> Sách của tôi
+                    </a>
+                    <a href="admin.html" class="nav-link admin-link">
+                        <i class="fas fa-user-shield"></i> Admin
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Home Section -->
+        <section id="home" class="section active">
+            <div class="hero">
+                <h2>🎉 Chào mừng đến với Thư Viện Số</h2>
+                <p>Khám phá hàng ngàn cuốn sách và mượn sách dễ dàng!</p>
+                
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <i class="fas fa-book"></i>
+                        <div>
+                            <h3 id="totalBooks">0</h3>
+                            <p>Tổng số sách</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #2ecc71, #27ae60);">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <h3 id="availableBooks">0</h3>
+                            <p>Sách có sẵn</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">
+                        <i class="fas fa-layer-group"></i>
+                        <div>
+                            <h3 id="categories">0</h3>
+                            <p>Thể loại</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Search -->
+            <div class="quick-search">
+                <div class="search-box">
+                    <input type="text" id="quickSearchInput" placeholder="🔍 Tìm kiếm nhanh sách hoặc tác giả...">
+                    <button class="btn btn-primary" onclick="quickSearch()">
+                        <i class="fas fa-search"></i> Tìm
+                    </button>
+                </div>
+            </div>
+
+            <!-- Books Section -->
+            <div class="books-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-book-open"></i> Danh sách sách</h2>
+                    <button class="btn btn-secondary" onclick="loadBooks()">
+                        <i class="fas fa-sync-alt"></i> Tải lại
+                    </button>
+                </div>
+                
+                <div class="filter-bar">
+                    <select id="categoryFilter" onchange="filterBooks()">
+                        <option value="">📁 Tất cả thể loại</option>
+                        <option value="Technology">💻 Technology</option>
+                        <option value="Fiction">📖 Fiction</option>
+                        <option value="Non-Fiction">📚 Non-Fiction</option>
+                        <option value="Science">🔬 Science</option>
+                        <option value="History">🏛️ History</option>
+                        <option value="Biography">👤 Biography</option>
+                        <option value="Other">📋 Other</option>
+                    </select>
+                    <select id="statusFilter" onchange="filterBooks()">
+                        <option value="">📊 Tất cả trạng thái</option>
+                        <option value="Available">✅ Có sẵn</option>
+                        <option value="Unavailable">❌ Đã mượn hết</option>
+                    </select>
+                </div>
+
+                <div id="booksContainer" class="books-grid"></div>
+
+                <div id="loading" class="loading" style="display: none;">
+                    <i class="fas fa-spinner fa-spin"></i> Đang tải sách...
+                </div>
+                <div id="error" class="error" style="display: none;"></div>
+            </div>
+        </section>
+
+        <!-- Search Section -->
+        <section id="search" class="section">
+            <div class="search-container">
+                <h2><i class="fas fa-search"></i> Tìm kiếm sách</h2>
+                <p class="search-hint">Tìm theo tên sách, tác giả, hoặc ISBN</p>
+                
+                <div class="search-box large">
+                    <input type="text" id="searchInput" placeholder="Nhập từ khóa tìm kiếm...">
+                    <button class="btn btn-primary" onclick="searchBooks()">
+                        <i class="fas fa-search"></i> Tìm kiếm
+                    </button>
+                </div>
+                
+                <div id="searchResults" class="books-grid"></div>
+            </div>
+        </section>
+
+        <!-- My Books Section -->
+        <section id="my-books" class="section">
+            <div class="my-books-container">
+                <h2><i class="fas fa-bookmark"></i> Sách đã mượn</h2>
+                <p class="section-hint">Danh sách sách bạn đang mượn</p>
+                
+                <div id="myBooksContainer" class="books-grid">
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>Bạn chưa mượn sách nào</p>
+                        <button onclick="showSection('home')" class="btn btn-primary">
+                            <i class="fas fa-book"></i> Khám phá sách
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Book Detail Modal -->
+    <div id="bookModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle"></h2>
+            <div id="modalBody"></div>
+            <div class="modal-actions" id="modalActions"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>📚 Hệ Thống Thư Viện Phân Tán</p>
+            <p><a href="admin.html">🔐 Trang Quản Trị</a></p>
+        </div>
+    </footer>
+
+    <script src="js/user.js"></script>
+</body>
+</html>

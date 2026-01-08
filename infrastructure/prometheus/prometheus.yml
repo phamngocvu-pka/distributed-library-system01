@@ -1,0 +1,90 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'library-cluster'
+    environment: 'production'
+
+# Alerting configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+# Rules files
+rule_files:
+  # - "alert_rules.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Book Service
+  - job_name: 'book-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['book-service:3001']
+        labels:
+          service: 'book-service'
+          environment: 'production'
+
+  # User Service
+  - job_name: 'user-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['user-service:3002']
+        labels:
+          service: 'user-service'
+          environment: 'production'
+
+  # Borrowing Service
+  - job_name: 'borrowing-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['borrowing-service:3003']
+        labels:
+          service: 'borrowing-service'
+          environment: 'production'
+
+  # Notification Service
+  - job_name: 'notification-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['notification-service:3004']
+        labels:
+          service: 'notification-service'
+          environment: 'production'
+
+  # Node Exporter (if added)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: []
+        # - targets: ['node-exporter:9100']
+
+  # Redis Exporter (if added)
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: []
+        # - targets: ['redis-exporter:9121']
+
+  # PostgreSQL Exporter (if added)
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: []
+        # - targets: ['postgres-exporter:9187']
+
+  # Nginx metrics
+  - job_name: 'nginx'
+    static_configs:
+      - targets: []
+        # - targets: ['nginx:9113']
+
+  # Consul
+  - job_name: 'consul'
+    static_configs:
+      - targets: ['consul:8500']
+        labels:
+          service: 'consul'

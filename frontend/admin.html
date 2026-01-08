@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Admin - Quản Lý Thư Viện</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="admin-body">
+    <!-- Admin Header -->
+    <header class="admin-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-user-shield"></i>
+                    <h1>Admin Panel</h1>
+                </div>
+                <nav>
+                    <a href="#" class="nav-link active" data-section="dashboard">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                    <a href="#" class="nav-link" data-section="books">
+                        <i class="fas fa-book"></i> Quản lý sách
+                    </a>
+                    <a href="#" class="nav-link" data-section="add-book">
+                        <i class="fas fa-plus-circle"></i> Thêm sách
+                    </a>
+                    <a href="#" class="nav-link" data-section="system">
+                        <i class="fas fa-server"></i> Hệ thống
+                    </a>
+                    <a href="index.html" class="nav-link user-link">
+                        <i class="fas fa-home"></i> Trang chủ
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container admin-main">
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section active">
+            <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+            
+            <div class="admin-stats">
+                <div class="admin-stat-card blue">
+                    <i class="fas fa-book"></i>
+                    <div>
+                        <h3 id="statTotalBooks">0</h3>
+                        <p>Tổng số sách</p>
+                    </div>
+                </div>
+                <div class="admin-stat-card green">
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <h3 id="statAvailable">0</h3>
+                        <p>Có sẵn</p>
+                    </div>
+                </div>
+                <div class="admin-stat-card orange">
+                    <i class="fas fa-hand-holding"></i>
+                    <div>
+                        <h3 id="statBorrowed">0</h3>
+                        <p>Đang mượn</p>
+                    </div>
+                </div>
+                <div class="admin-stat-card purple">
+                    <i class="fas fa-layer-group"></i>
+                    <div>
+                        <h3 id="statCategories">0</h3>
+                        <p>Thể loại</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <h3><i class="fas fa-clock"></i> Hoạt động gần đây</h3>
+                    <div id="recentActivity">
+                        <p class="loading"><i class="fas fa-spinner fa-spin"></i> Đang tải...</p>
+                    </div>
+                </div>
+                <div class="dashboard-card">
+                    <h3><i class="fas fa-heartbeat"></i> Trạng thái hệ thống</h3>
+                    <div id="systemHealth">
+                        <p class="loading"><i class="fas fa-spinner fa-spin"></i> Đang kiểm tra...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Books Management Section -->
+        <section id="books" class="section">
+            <div class="section-header">
+                <h2><i class="fas fa-book"></i> Quản lý sách</h2>
+                <button class="btn btn-primary" onclick="showSection('add-book')">
+                    <i class="fas fa-plus"></i> Thêm sách mới
+                </button>
+            </div>
+
+            <div class="admin-toolbar">
+                <div class="search-box">
+                    <input type="text" id="adminSearchInput" placeholder="Tìm kiếm sách...">
+                    <button class="btn btn-primary" onclick="adminSearchBooks()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <select id="adminCategoryFilter" onchange="adminFilterBooks()">
+                    <option value="">Tất cả thể loại</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Fiction">Fiction</option>
+                    <option value="Non-Fiction">Non-Fiction</option>
+                    <option value="Science">Science</option>
+                    <option value="History">History</option>
+                    <option value="Biography">Biography</option>
+                    <option value="Other">Other</option>
+                </select>
+                <button class="btn btn-secondary" onclick="loadAdminBooks()">
+                    <i class="fas fa-sync-alt"></i> Tải lại
+                </button>
+            </div>
+
+            <div class="admin-table-container">
+                <table class="admin-table" id="booksTable">
+                    <thead>
+                        <tr>
+                            <th>Tên sách</th>
+                            <th>Tác giả</th>
+                            <th>ISBN</th>
+                            <th>Thể loại</th>
+                            <th>Số lượng</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="booksTableBody">
+                        <!-- Books will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="adminLoading" class="loading" style="display: none;">
+                <i class="fas fa-spinner fa-spin"></i> Đang tải...
+            </div>
+        </section>
+
+        <!-- Add Book Section -->
+        <section id="add-book" class="section">
+            <h2><i class="fas fa-plus-circle"></i> Thêm sách mới</h2>
+            
+            <div class="form-container">
+                <form id="addBookForm" onsubmit="addBook(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="title">Tên sách *</label>
+                            <input type="text" id="title" placeholder="Nhập tên sách" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="author">Tác giả *</label>
+                            <input type="text" id="author" placeholder="Nhập tên tác giả" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="isbn">ISBN * <small>(VD: 978-0-123-45678-9)</small></label>
+                            <input type="text" id="isbn" placeholder="978-0-123-45678-9" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="publisher">Nhà xuất bản</label>
+                            <input type="text" id="publisher" placeholder="NXB Kim Đồng">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="publishedYear">Năm xuất bản</label>
+                            <input type="number" id="publishedYear" min="1000" max="2026" placeholder="2024">
+                        </div>
+                        <div class="form-group">
+                            <label for="category">Thể loại</label>
+                            <select id="category">
+                                <option value="Technology">💻 Technology</option>
+                                <option value="Fiction">📖 Fiction</option>
+                                <option value="Non-Fiction">📚 Non-Fiction</option>
+                                <option value="Science">🔬 Science</option>
+                                <option value="History">🏛️ History</option>
+                                <option value="Biography">👤 Biography</option>
+                                <option value="Other">📋 Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="totalCopies">Số lượng *</label>
+                            <input type="number" id="totalCopies" min="1" value="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="language">Ngôn ngữ</label>
+                            <input type="text" id="language" placeholder="Tiếng Việt" value="Vietnamese">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Mô tả</label>
+                        <textarea id="description" rows="4" placeholder="Nhập mô tả sách..."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> Thêm sách
+                        </button>
+                        <button type="reset" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-undo"></i> Làm mới
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Edit Book Modal -->
+        <section id="edit-book" class="section">
+            <h2><i class="fas fa-edit"></i> Chỉnh sửa sách</h2>
+            
+            <div class="form-container">
+                <form id="editBookForm" onsubmit="updateBook(event)">
+                    <input type="hidden" id="editBookId">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editTitle">Tên sách *</label>
+                            <input type="text" id="editTitle" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editAuthor">Tác giả *</label>
+                            <input type="text" id="editAuthor" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editIsbn">ISBN</label>
+                            <input type="text" id="editIsbn" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="editPublisher">Nhà xuất bản</label>
+                            <input type="text" id="editPublisher">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editPublishedYear">Năm xuất bản</label>
+                            <input type="number" id="editPublishedYear" min="1000" max="2026">
+                        </div>
+                        <div class="form-group">
+                            <label for="editCategory">Thể loại</label>
+                            <select id="editCategory">
+                                <option value="Technology">Technology</option>
+                                <option value="Fiction">Fiction</option>
+                                <option value="Non-Fiction">Non-Fiction</option>
+                                <option value="Science">Science</option>
+                                <option value="History">History</option>
+                                <option value="Biography">Biography</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editTotalCopies">Tổng số bản</label>
+                            <input type="number" id="editTotalCopies" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="editStatus">Trạng thái</label>
+                            <select id="editStatus">
+                                <option value="Available">Có sẵn</option>
+                                <option value="Unavailable">Không có</option>
+                                <option value="Maintenance">Bảo trì</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editDescription">Mô tả</label>
+                        <textarea id="editDescription" rows="4"></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> Cập nhật
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-lg" onclick="showSection('books')">
+                            <i class="fas fa-arrow-left"></i> Quay lại
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- System Section -->
+        <section id="system" class="section">
+            <h2><i class="fas fa-server"></i> Thông tin hệ thống</h2>
+            
+            <div class="system-grid">
+                <div class="system-card">
+                    <h3><i class="fas fa-heartbeat"></i> Health Check</h3>
+                    <div id="healthInfo">
+                        <p class="loading"><i class="fas fa-spinner fa-spin"></i> Đang kiểm tra...</p>
+                    </div>
+                </div>
+                
+                <div class="system-card">
+                    <h3><i class="fas fa-link"></i> Monitoring Links</h3>
+                    <div class="links-list">
+                        <a href="http://localhost:3001" target="_blank" class="system-link">
+                            <i class="fas fa-server"></i> Book Service API
+                        </a>
+                        <a href="http://localhost:8500" target="_blank" class="system-link">
+                            <i class="fas fa-search"></i> Consul (Service Discovery)
+                        </a>
+                        <a href="http://localhost:9090" target="_blank" class="system-link">
+                            <i class="fas fa-chart-line"></i> Prometheus (Metrics)
+                        </a>
+                        <a href="http://localhost:3005" target="_blank" class="system-link">
+                            <i class="fas fa-chart-bar"></i> Grafana (Dashboard)
+                        </a>
+                        <a href="http://localhost:15672" target="_blank" class="system-link">
+                            <i class="fas fa-envelope"></i> RabbitMQ Management
+                        </a>
+                    </div>
+                </div>
+
+                <div class="system-card">
+                    <h3><i class="fas fa-database"></i> Database</h3>
+                    <div id="dbInfo">
+                        <p class="loading"><i class="fas fa-spinner fa-spin"></i> Đang kiểm tra...</p>
+                    </div>
+                </div>
+
+                <div class="system-card">
+                    <h3><i class="fas fa-cogs"></i> Quick Actions</h3>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="refreshAllData()">
+                            <i class="fas fa-sync-alt"></i> Refresh All Data
+                        </button>
+                        <button class="btn btn-secondary" onclick="checkHealth()">
+                            <i class="fas fa-heartbeat"></i> Check Health
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content modal-sm">
+            <h3><i class="fas fa-exclamation-triangle"></i> Xác nhận xóa</h3>
+            <p>Bạn có chắc chắn muốn xóa sách này?</p>
+            <p id="deleteBookTitle" class="delete-book-title"></p>
+            <div class="modal-actions">
+                <button class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash"></i> Xóa
+                </button>
+                <button class="btn btn-secondary" onclick="closeDeleteModal()">
+                    <i class="fas fa-times"></i> Hủy
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="admin-footer">
+        <div class="container">
+            <p>🔐 Admin Panel - Hệ Thống Thư Viện Phân Tán</p>
+        </div>
+    </footer>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>
